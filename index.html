@@ -190,31 +190,29 @@
       const ua = navigator.userAgent || navigator.vendor || window.opera || "";
       const hay = ua.toLowerCase();
       
-      // Debug mode - show user agent if ?debug=true
-      const urlParams = new URLSearchParams(window.location.search);
-      if(urlParams.get('debug') === 'true'){
-        alert('User Agent: ' + ua);
-      }
-      
-      // Comprehensive list of in-app browser identifiers
+      // TikTok uses multiple identifiers in their in-app browser
       const needles = [
-        // TikTok variants
-        "tiktok", "bytedance", "musical_ly", "bytelocale",
-        // Instagram/Facebook
-        "instagram", "fb_iab", "fb4a", "fban", "fbav", "facebook", "messenger",
-        // Other social platforms
-        "twitter", "line", "kakaotalk", "snapchat",
-        "micromessenger", "wechat", "pinterest", "reddit",
-        "telegram", "linkedin", "whatsapp"
+        "instagram","fb_iab","fb4a","fban","fbav","facebook","messenger",
+        "tiktok","aweme","bytedancewebview","musically","bytedance",
+        "twitter","line","kakaotalk","snapchat",
+        "micromessenger","wechat","pinterest","reddit",
+        "telegram","linkedin"
       ];
       
-      // Check if any needle is in the user agent
-      const hasInAppMarker = needles.some(n => hay.includes(n));
+      // Check if any of the in-app browser identifiers are present
+      if(needles.some(n => hay.includes(n))){
+        return true;
+      }
       
-      // Additional check: if it's NOT Safari/Chrome/Firefox standalone
-      const isStandaloneBrowser = hay.includes('safari') && !hay.includes('instagram') && !hay.includes('fb');
+      // Additional check for Android WebView (fallback detection)
+      if(hay.includes('android') && hay.includes(' wv')){
+        // Make sure it's not a real browser
+        if(!hay.includes('chrome') && !hay.includes('firefox') && !hay.includes('safari')){
+          return true;
+        }
+      }
       
-      return hasInAppMarker;
+      return false;
     }
 
     function showInstructionUI(show){
@@ -235,6 +233,10 @@
     }
 
     function checkBrowser(){
+      // Debug: Log user agent to console for troubleshooting
+      console.log('User Agent:', navigator.userAgent);
+      console.log('Is In-App Browser:', isInAppBrowser());
+      
       // Test mode: add ?test=true to URL to preview in-app browser view
       const urlParams = new URLSearchParams(window.location.search);
       if(urlParams.get('test') === 'true'){
@@ -243,9 +245,12 @@
       }
       
       if(isInAppBrowser()){
+        console.log('In-app browser detected - showing instructions');
         showInstructionUI(true);
         return;
       }
+      
+      console.log('Regular browser detected - redirecting to:', TARGET_URL);
       
       // Regular browser - redirect
       const q = location.search || "";
